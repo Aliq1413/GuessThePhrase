@@ -1,7 +1,9 @@
 package com.example.guessthephrase
 
 import android.app.AlertDialog
+import android.content.Context
 import android.content.DialogInterface
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
@@ -19,17 +21,26 @@ class MainActivity : AppCompatActivity() {
     private lateinit var messages: ArrayList<String>
     private lateinit var tvPhrase: TextView
     private lateinit var tvLetters: TextView
+    private lateinit var  myHighScore:TextView
 
     private val answer = "this is the secret phrase"
     private val myAnswerDictionary = mutableMapOf<Int, Char>()
     private var myAnswer = ""
     private var guessedLetters = ""
-    private var count = 0
+    private var count  = 0
     private var guessPhrase = true
+    private lateinit var sharedPreferences: SharedPreferences
+    private var score = 0
+    private var highScore = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        sharedPreferences = this.getSharedPreferences(
+            getString(R.string.preference_file_key), Context.MODE_PRIVATE)
+        highScore = sharedPreferences.getInt("HighScore",0)
+        myHighScore = findViewById(R.id.tvHS)
+        myHighScore.text = "HighScore:$highScore"
 
         for(i in answer.indices){
             if(answer[i] == ' '){
@@ -63,6 +74,7 @@ class MainActivity : AppCompatActivity() {
         if(guessPhrase){
             if(msg == answer){
                 disableEntry()
+                updateScore()
                 showAlertDialog("You win!\n\nPlay again?")
             }else{
                 messages.add("Wrong guess: $msg")
@@ -125,6 +137,17 @@ class MainActivity : AppCompatActivity() {
         if(count<10){messages.add("$guessesLeft guesses remaining")}
         updateText()
          rvMessages.scrollToPosition(messages.size - 1)
+    }
+    private fun updateScore(){
+        score = 10 - count
+        if(score >= highScore){
+            highScore = score
+            with(sharedPreferences.edit()) {
+                putInt("HighScore", highScore)
+                apply()
+            }
+            Snackbar.make(clRoot, "NEW HIGH SCORE!", Snackbar.LENGTH_LONG).show()
+        }
     }
 
     private fun showAlertDialog(title: String) {
